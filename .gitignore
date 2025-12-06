@@ -3,3 +3,8 @@ output/
 models/
 .venv/
 tmp_trainer/
+
+.csv
+.npy
+*.csv
+baseline_clustered.csv

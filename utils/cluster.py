@@ -11,7 +11,7 @@ from google.genai import types
 from typing import List
 from tqdm import tqdm
 
-GEMINI_API_KEY = ""  # needs quotes
+GEMINI_API_KEY = "AIzaSyCHlV2Eur-Oe009OqO6VHRFkXfpsydknMg"
 model_name = "gemini-embedding-001"
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -61,20 +61,8 @@ Provide a short 1-3 word category label for this cluster. Reply with just the la
     
     return cluster_names
 
-# Usage
-cluster_names = get_cluster_labels(viz_df, your_llm_function)
-viz_df['cluster_label'] = viz_df['cluster'].map(cluster_names)
 
-# Use cluster_label for viz instead
-fig = px.scatter_3d(
-    viz_df, x='x', y='y', z='z',
-    color='cluster_label',
-    hover_data=['word', 'definition'],
-    title='Indian-Origin Words (Gemini Baseline, Mean-Centered)'
-)
-
-# Load data - you said non_indian but you want indian words?
-# Assuming you have both files
+# Load data
 df = pd.read_csv("data/indian_words.csv")  # adjust filename
 words = df['word'].tolist()
 definitions = df['definition'].tolist()
@@ -98,7 +86,7 @@ reducer = umap.UMAP(n_components=3, n_neighbors=15, min_dist=0.1, random_state=4
 baseline_coords = reducer.fit_transform(baseline_centered)
 
 # Cluster in high-dim
-baseline_labels = hdbscan.HDBSCAN(min_cluster_size=5).fit_predict(baseline_centered)
+baseline_labels = hdbscan.HDBSCAN(min_cluster_size=5, metric='cosine').fit_predict(baseline_centered)
 
 # Build df for viz
 viz_df = pd.DataFrame({
@@ -110,7 +98,7 @@ viz_df = pd.DataFrame({
     'cluster': baseline_labels.astype(str)
 })
 
-cluster_names = get_cluster_labels(viz_df, your_llm_function)
+cluster_names = get_cluster_labels(viz_df, llm_call)
 viz_df['cluster_label'] = viz_df['cluster'].map(cluster_names)
 
 
@@ -119,13 +107,6 @@ np.save('baseline_embeddings.npy', baseline_emb)
 viz_df.to_csv('baseline_clustered.csv', index=False)
 
 # Viz
-# fig = px.scatter_3d(
-#     viz_df, x='x', y='y', z='z',
-#     color='cluster',
-#     hover_data=['word', 'definition'],
-#     title='Indian-Origin Words (Gemini Baseline, Mean-Centered)'
-# )
-
 fig = px.scatter_3d(
     viz_df, x='x', y='y', z='z',
     color='cluster_label',
